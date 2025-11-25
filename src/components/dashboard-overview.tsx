@@ -12,18 +12,9 @@ interface DashboardOverviewProps {
 export function DashboardOverview({ onTabChange }: DashboardOverviewProps) {
   return (
     <div className="space-y-6">
-
-      {/* Header with Picture */}
-      <div className="flex items-center gap-4">
-        <img
-          src="/1000113634.jpeg"
-          alt="Admin Profile"
-          className="w-16 h-16 rounded-lg object-cover border"
-        />
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
-          <p className="text-gray-600">Monitor your locker management system at a glance.</p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
+        <p className="text-gray-600">Monitor your locker management system at a glance.</p>
       </div>
 
       <DashboardStats />
@@ -31,6 +22,8 @@ export function DashboardOverview({ onTabChange }: DashboardOverviewProps) {
       <div className="grid gap-6 md:grid-cols-2">
         <RecentActivity />
         <QuickActions onTabChange={onTabChange} />
+        
+        {/* Locker Management Overview Section */}
         <div className="md:col-span-2">
           <LockerManagementOverview />
         </div>
