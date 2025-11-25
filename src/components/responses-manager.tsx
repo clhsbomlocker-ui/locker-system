@@ -400,4 +400,5 @@ export function ResponsesManager() {
       )}
     </div>
     </React.Fragment>
+  )
 }
