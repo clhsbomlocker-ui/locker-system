@@ -154,8 +154,7 @@ export function AdminDashboard() {
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-4">BOM Locker System</h3>
             <p className="text-gray-300 text-sm max-w-2xl mx-auto">
-              Efficient locker management system for educational institutions.
-              Streamline student registration and locker assignments.
+              Efficient locker management system.
             </p>
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-center">
