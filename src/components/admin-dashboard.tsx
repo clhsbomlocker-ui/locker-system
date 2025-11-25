@@ -159,7 +159,7 @@ export function AdminDashboard() {
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-center">
             <p className="text-gray-400 text-sm">
-               {new Date().getFullYear()} © Chung Ling High School T02 Board of Monitors Locker System. All rights reserved.
+             ©  {new Date().getFullYear()}  Chung Ling High School T02 Board of Monitors Locker System. All rights reserved.
             </p>
             <p className="text-gray-600 text-xs mt-2 opacity-50 select-none"> Developed since 2025 </p>
           </div>
