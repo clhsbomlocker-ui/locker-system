@@ -229,7 +229,7 @@ export function ResponsesManager() {
   }
 
   return (
-    <React.Fragment>
+    <>
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -399,6 +399,6 @@ export function ResponsesManager() {
         </div>
       )}
     </div>
-    </React.Fragment>
+    </>
   )
 }
