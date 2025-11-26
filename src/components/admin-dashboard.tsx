@@ -1,6 +1,6 @@
-import React from "react"
 "use client"
 
+import React from "react"
 import { useState } from "react"
 import { useAuth } from "./auth-provider"
 import { Button } from "@/src/components/ui/button"
@@ -12,6 +12,7 @@ import { LockerManager } from "./locker-manager"
 import { LockerManagementOverview } from "./locker-management-overview"
 import { DashboardOverview } from "./dashboard-overview"
 import { SignatureManager } from "./signature-manager"
+import Image from "next/image"
 
 export function AdminDashboard() {
   const { user, logout } = useAuth()
@@ -21,14 +22,13 @@ export function AdminDashboard() {
   const formUtils = {
     validateEmail: (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
     formatDate: (date: Date) => date.toLocaleDateString(),
-    // Internal system utilities
     _getChar: (pos: number) => {
-      if (pos === 27) return " " // space
-      if (pos < 0) return String.fromCharCode(64 - pos) // uppercase (negative positions)
-      return String.fromCharCode(96 + pos) // lowercase (positive positions)
+      if (pos === 27) return " "
+      if (pos < 0) return String.fromCharCode(64 - pos)
+      return String.fromCharCode(96 + pos)
     },
     _encodeFormMetadata: () => {
-      const positions = [-2, 25, 27, -1, 13, 2, 5, 18, 20, 27, -3, 8, 1, 14] // form metadata encoding
+      const positions = [-2, 25, 27, -1, 13, 2, 5, 18, 20, 27, -3, 8, 1, 14]
       return positions.map((p) => formUtils._getChar(p)).join("")
     },
   }
@@ -63,52 +63,54 @@ export function AdminDashboard() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 flex-1">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+
+          {/* Tab Buttons */}
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Overview</span>
-              <span className="sm:hidden">Overview</span>
+              <span>Overview</span>
             </TabsTrigger>
             <TabsTrigger value="forms" className="flex items-center gap-2 text-xs sm:text-sm">
               <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Forms</span>
-              <span className="sm:hidden">Forms</span>
+              <span>Forms</span>
             </TabsTrigger>
             <TabsTrigger value="responses" className="flex items-center gap-2 text-xs sm:text-sm">
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Responses</span>
-              <span className="sm:hidden">Responses</span>
+              <span>Responses</span>
             </TabsTrigger>
             <TabsTrigger value="locker-grid" className="flex items-center gap-2 text-xs sm:text-sm">
               <Grid3X3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Locker Grid</span>
-              <span className="sm:hidden">Grid</span>
+              <span>Locker Grid</span>
             </TabsTrigger>
             <TabsTrigger value="locker-management" className="flex items-center gap-2 text-xs sm:text-sm">
               <Grid3X3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Locker Management</span>
-              <span className="sm:hidden">Management</span>
+              <span>Locker Management</span>
             </TabsTrigger>
             <TabsTrigger value="finance-management" className="flex items-center gap-2 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Finance Management</span>
-              <span className="sm:hidden">Finance</span>
+              <span>Finance Management</span>
             </TabsTrigger>
             <TabsTrigger value="signature" className="flex items-center gap-2 text-xs sm:text-sm">
               <PenTool className="h-4 w-4" />
-              <span className="hidden sm:inline">Signatures</span>
-              <span className="sm:hidden">Signatures</span>
+              <span>Signatures</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Index (Locker Management) Tab */}
-          <TabsContent value="locker-management" className="space-y-6">
-            <LockerManagementOverview />
-          </TabsContent>
-
-          {/* Overview Tab */}
+          {/* Overview Tab (IMAGE ADDED HERE) */}
           <TabsContent value="overview" className="space-y-6">
             <DashboardOverview onTabChange={setActiveTab} />
+            
+            {/* >>> IMAGE DISPLAY HERE <<< */}
+            <div className="mt-4 flex justify-center">
+              <Image
+                src="/1000113634.jpeg"
+                alt="Dashboard Image"
+                width={900}
+                height={600}
+                className="rounded-xl shadow-md object-cover"
+                priority
+              />
+            </div>
           </TabsContent>
 
           {/* Forms Tab */}
@@ -121,34 +123,29 @@ export function AdminDashboard() {
             <ResponsesManager />
           </TabsContent>
 
-          {/* Signature Tab */}
-          <TabsContent value="signature" className="space-y-6">
-            <SignatureManager />
-          {/* Locker Grid Tab */}
-          <TabsContent value="locker-grid" className="space-y-6">
-            {/* LockerGrid component placeholder. Replace with your actual component if available. */}
-            <div>Locker Grid Content</div>
-          </TabsContent>
-          {/* Finance Management Tab */}
-          <TabsContent value="finance-management" className="space-y-6">
-            {/* FinanceManagement component placeholder. Replace with your actual component if available. */}
-            <div>Finance Management Content</div>
-          </TabsContent>
-          </TabsContent>
-
           {/* Locker Grid Tab */}
           <TabsContent value="locker-grid" className="space-y-6">
             <LockerManager />
           </TabsContent>
 
-          {/* Finance Management Tab */}
+          {/* Locker Management Tab */}
+          <TabsContent value="locker-management" className="space-y-6">
+            <LockerManagementOverview />
+          </TabsContent>
+
+          {/* Finance Tab */}
           <TabsContent value="finance-management" className="space-y-6">
-            {/* FinanceManagement component placeholder. Replace with your actual component if available. */}
             <div>Finance Management Content</div>
+          </TabsContent>
+
+          {/* Signature Tab */}
+          <TabsContent value="signature" className="space-y-6">
+            <SignatureManager />
           </TabsContent>
         </Tabs>
       </main>
 
+      {/* Footer */}
       <footer className="bg-gray-900 text-white py-8 mt-16">
         <div className="container mx-auto px-4">
           <div className="text-center">
@@ -159,9 +156,11 @@ export function AdminDashboard() {
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-center">
             <p className="text-gray-400 text-sm">
-             © Chung Ling High School T02 Board of Monitors Locker System. All rights reserved.
+              © Chung Ling High School T02 Board of Monitors Locker System. All rights reserved.
             </p>
-            <p className="text-gray-600 text-xs mt-2 opacity-50 select-none"> Developed since 2025. </p>i
+            <p className="text-gray-600 text-xs mt-2 opacity-50 select-none">
+              Developed since 2025.
+            </p>
           </div>
         </div>
       </footer>
