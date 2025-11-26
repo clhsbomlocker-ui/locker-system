@@ -47,7 +47,7 @@ export function AdminDashboard() {
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <img src="/IMG_0704.JPG" alt="Monitor Logo" className="h-14 w-14 object-contain" />
+            <img src="/IMG_0704.jpg" alt="Monitor Logo" className="h-14 w-14 object-contain" />
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-sm text-gray-600">Welcome back, {user?.email}</p>
