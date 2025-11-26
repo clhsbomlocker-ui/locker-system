@@ -103,7 +103,7 @@ export function AdminDashboard() {
             {/* >>> IMAGE DISPLAY HERE <<< */}
             <div className="mt-4 flex justify-center">
               <Image
-                src="/1000113634.jpeg"
+                src="/IMG_0704.jpeg"
                 alt="Dashboard Image"
                 width={900}
                 height={600}
