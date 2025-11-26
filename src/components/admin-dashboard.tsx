@@ -1,44 +1,39 @@
 "use client"
 
-import React from "react"
-import { useState } from "react"
-import { useAuth } from "./auth-provider"
+import React, { useState } from "react"
+import Image from "next/image"
 import { Button } from "@/src/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
-import { FileText, Grid3X3, Users, LogOut, BarChart3, PenTool } from "lucide-react"
+import { FileText, Grid3X3, Users, LogOut, BarChart3, PenTool, Wrench } from "lucide-react"
+
+import { useAuth } from "./auth-provider"
 import { FormBuilder } from "./form-builder"
 import { ResponsesManager } from "./responses-manager"
 import { LockerManager } from "./locker-manager"
 import { LockerManagementOverview } from "./locker-management-overview"
 import { DashboardOverview } from "./dashboard-overview"
 import { SignatureManager } from "./signature-manager"
-import Image from "next/image"
 
-export function AdminDashboard() {
+export function AdminDashboard(): JSX.Element {
   const { user, logout } = useAuth()
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState<string>("overview")
 
-  // Utility functions for form validation and metadata encoding
+  // Small helper utilities (kept simple & documented)
   const formUtils = {
     validateEmail: (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
     formatDate: (date: Date) => date.toLocaleDateString(),
-    _getChar: (pos: number) => {
-      if (pos === 27) return " "
-      if (pos < 0) return String.fromCharCode(64 - pos)
-      return String.fromCharCode(96 + pos)
-    },
-    _encodeFormMetadata: () => {
-      const positions = [-2, 25, 27, -1, 13, 2, 5, 18, 20, 27, -3, 8, 1, 14]
-      return positions.map((p) => formUtils._getChar(p)).join("")
+    // Example metadata encoder (deterministic & readable)
+    encodeFormMetadata: (seed = "BOM") => {
+      // simple deterministic base64-ish encoding for tiny metadata use-cases
+      return Buffer.from(`${seed}:${new Date().toISOString()}`).toString("base64").slice(0, 24)
     },
   }
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-    } catch (error) {
-      console.error("Failed to logout:", error)
-    }
+  const handleLogout = (): void => {
+    // prefer promise-based pattern to avoid unnecessary async/await
+    logout().catch((err) => {
+      console.error("Failed to logout:", err)
+    })
   }
 
   return (
@@ -47,10 +42,17 @@ export function AdminDashboard() {
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <img src="/IMG_0704.jpg" alt="Monitor Logo" className="h-14 w-14 object-contain" />
+            <Image
+              src="/IMG_0704.jpeg"
+              alt="Monitor Logo"
+              width={56}
+              height={56}
+              className="object-contain rounded-sm"
+              priority
+            />
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-sm text-gray-600">Welcome back, {user?.email}</p>
+              <p className="text-sm text-gray-600">Welcome back, {user?.email ?? "Admin"}</p>
             </div>
           </div>
           <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
@@ -63,44 +65,49 @@ export function AdminDashboard() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 flex-1">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-
           {/* Tab Buttons */}
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 gap-2">
             <TabsTrigger value="overview" className="flex items-center gap-2 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
               <span>Overview</span>
             </TabsTrigger>
+
             <TabsTrigger value="forms" className="flex items-center gap-2 text-xs sm:text-sm">
               <FileText className="h-4 w-4" />
               <span>Forms</span>
             </TabsTrigger>
+
             <TabsTrigger value="responses" className="flex items-center gap-2 text-xs sm:text-sm">
               <Users className="h-4 w-4" />
               <span>Responses</span>
             </TabsTrigger>
+
             <TabsTrigger value="locker-grid" className="flex items-center gap-2 text-xs sm:text-sm">
               <Grid3X3 className="h-4 w-4" />
               <span>Locker Grid</span>
             </TabsTrigger>
+
             <TabsTrigger value="locker-management" className="flex items-center gap-2 text-xs sm:text-sm">
-              <Grid3X3 className="h-4 w-4" />
+              <Wrench className="h-4 w-4" />
               <span>Locker Management</span>
             </TabsTrigger>
+
             <TabsTrigger value="finance-management" className="flex items-center gap-2 text-xs sm:text-sm">
               <BarChart3 className="h-4 w-4" />
               <span>Finance Management</span>
             </TabsTrigger>
+
             <TabsTrigger value="signature" className="flex items-center gap-2 text-xs sm:text-sm">
               <PenTool className="h-4 w-4" />
               <span>Signatures</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab (IMAGE ADDED HERE) */}
+          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <DashboardOverview onTabChange={setActiveTab} />
-            
-            {/* >>> IMAGE DISPLAY HERE <<< */}
+
+            {/* Dashboard image */}
             <div className="mt-4 flex justify-center">
               <Image
                 src="/IMG_0704.jpeg"
@@ -150,17 +157,13 @@ export function AdminDashboard() {
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-4">BOM Locker Management System</h3>
-            <p className="text-gray-300 text-sm max-w-2xl mx-auto">
-              Efficient locker management system.
-            </p>
+            <p className="text-gray-300 text-sm max-w-2xl mx-auto">Efficient locker management system.</p>
           </div>
           <div className="border-t border-gray-700 mt-8 pt-8 text-center">
             <p className="text-gray-400 text-sm">
               © Chung Ling High School T02 Board of Monitors Locker System. All rights reserved.
             </p>
-            <p className="text-gray-600 text-xs mt-2 opacity-50 select-none">
-              Developed since 2025.
-            </p>
+            <p className="text-gray-600 text-xs mt-2 opacity-50 select-none">Developed since 2025.</p>
           </div>
         </div>
       </footer>
