@@ -149,7 +149,7 @@ export function AdminDashboard() {
       <footer className="bg-gray-900 text-white py-8 mt-16">
         <div className="container mx-auto px-4">
           <div className="text-center">
-            <h3 className="text-lg font-semibold mb-4">BOM Locker System</h3>
+            <h3 className="text-lg font-semibold mb-4">BOM Locker Management System</h3>
             <p className="text-gray-300 text-sm max-w-2xl mx-auto">
               Efficient locker management system.
             </p>
