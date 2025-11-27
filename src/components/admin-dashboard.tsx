@@ -94,16 +94,7 @@ export function AdminDashboard(): JSX.Element {
           <TabsContent value="overview" className="space-y-6">
             <DashboardOverview onTabChange={setActiveTab} />
 
-            <div className="mt-4 flex justify-center">
-              <img
-                src={LOCAL_IMG}
-                // Use `GITHUB_IMG` if desired: src={GITHUB_IMG}
-                alt="Dashboard Image"
-                width={900}
-                height={600}
-                className="rounded-xl shadow-md object-cover"
-              />
-            </div>
+            {/* Dashboard image removed per request */}
           </TabsContent>
 
           {/* Forms */}
