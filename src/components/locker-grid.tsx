@@ -543,137 +543,181 @@ export function LockerGrid({ selectedStudent, onAssignmentComplete }: LockerGrid
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
-            <table className="min-w-full border-collapse">
-              <tbody>
-                {rowLockers.length > 0 ? (
-                  (() => {
-                    const rows = rowLockers.length
-                    const colsForColumns = Math.ceil(columnLockers.length / rows)
-                    return Array.from({ length: rows }).map((_, i) => {
-                      return (
-                        <tr key={i} className="align-top">
-                          {/* First column: row locker */}
-                          <td className="px-0 ">
-                            {rowLockers[i] ? (
-                              <Button
-                                variant="outline"
-                                className={`h-16 w-20 m-0 flex flex-col items-center justify-center ${
-                                  rowLockers[i].isBroken
-                                    ? "bg-yellow-100 border-yellow-300 hover:bg-yellow-200"
-                                    : getLockerStatus(rowLockers[i]) === "occupied"
-                                    ? "bg-red-100 border-red-300 hover:bg-red-200"
-                                    : "bg-green-100 border-green-300 hover:bg-green-200"
-                                } ${markingBroken || rowLockers[i].isBroken || (selectedStudent && getLockerStatus(rowLockers[i]) === "available") ? "cursor-pointer" : ""}`}
-                                onClick={() => handleLockerClick(rowLockers[i])}
-                                disabled={!(markingBroken || rowLockers[i].isBroken || getLockerStatus(rowLockers[i]) === "occupied" || (selectedStudent && getLockerStatus(rowLockers[i]) === "available"))}
-                              >
-                                <span className="font-medium text-sm">{rowLockers[i].number}</span>
-                                {rowLockers[i].isBroken ? (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <span className="inline-flex items-center">
+            {/* Desktop / wide screens: keep existing table layout */}
+            <div className="hidden sm:block">
+              <table className="min-w-full border-collapse">
+                <tbody>
+                  {rowLockers.length > 0 ? (
+                    (() => {
+                      const rows = rowLockers.length
+                      const colsForColumns = Math.ceil(columnLockers.length / rows)
+                      return Array.from({ length: rows }).map((_, i) => {
+                        return (
+                          <tr key={i} className="align-top">
+                            {/* First column: row locker */}
+                            <td className="px-0 ">
+                              {rowLockers[i] ? (
+                                <Button
+                                  variant="outline"
+                                  className={`h-16 w-20 m-0 flex flex-col items-center justify-center ${
+                                    rowLockers[i].isBroken
+                                      ? "bg-yellow-100 border-yellow-300 hover:bg-yellow-200"
+                                      : getLockerStatus(rowLockers[i]) === "occupied"
+                                      ? "bg-red-100 border-red-300 hover:bg-red-200"
+                                      : "bg-green-100 border-green-300 hover:bg-green-200"
+                                  } ${markingBroken || rowLockers[i].isBroken || (selectedStudent && getLockerStatus(rowLockers[i]) === "available") ? "cursor-pointer" : ""}`}
+                                  onClick={() => handleLockerClick(rowLockers[i])}
+                                  disabled={!(markingBroken || rowLockers[i].isBroken || getLockerStatus(rowLockers[i]) === "occupied" || (selectedStudent && getLockerStatus(rowLockers[i]) === "available"))}
+                                >
+                                  <span className="font-medium text-sm">{rowLockers[i].number}</span>
+                                  {rowLockers[i].isBroken ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="inline-flex items-center">
+                                          <Badge
+                                            variant="destructive"
+                                            aria-label="Broken"
+                                            className="text-[10px] sm:text-xs overflow-hidden truncate"
+                                          >
+                                            Broken
+                                          </Badge>
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-xs">
+                                        <div className="text-sm">
+                                          <div className="font-semibold mb-1">Broken — Reason</div>
+                                          <div className="whitespace-pre-wrap text-xs text-muted-foreground">
+                                            {rowLockers[i].brokenRemarks || "Reason not provided"}
+                                          </div>
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    <Badge
+                                      variant={getLockerStatus(rowLockers[i]) === "occupied" ? "destructive" : "secondary"}
+                                      aria-label={getLockerStatus(rowLockers[i]) === "occupied" ? "Occupied" : "Available"}
+                                      className="text-[10px] sm:text-xs overflow-hidden truncate"
+                                    >
+                                      {getLockerStatus(rowLockers[i]) === "occupied" ? "Occupied" : "Available"}
+                                    </Badge>
+                                  )}
+                                </Button>
+                              ) : (
+                                <div className="h-14 w-16" />
+                              )}
+                            </td>
+
+                            {/* Additional columns populated from columnLockers */}
+                            {Array.from({ length: colsForColumns }).map((_, colIndex) => {
+                              const idx = colIndex * rows + i
+                              const locker = columnLockers[idx]
+                              return (
+                                <td className="p-0" key={colIndex}>
+                                  {locker ? (
+                                    <Button
+                                      variant="outline"
+                                      className={`h-16 w-20 m-0 flex flex-col items-center justify-center ${
+                                        locker.isBroken
+                                          ? "bg-yellow-100 border-yellow-300 hover:bg-yellow-200"
+                                          : getLockerStatus(locker) === "occupied"
+                                          ? "bg-red-100 border-red-300 hover:bg-red-200"
+                                          : "bg-green-100 border-green-300 hover:bg-green-200"
+                                      } ${markingBroken || locker.isBroken || (selectedStudent && getLockerStatus(locker) === "available") ? "cursor-pointer" : ""}`}
+                                      onClick={() => handleLockerClick(locker)}
+                                      disabled={!(markingBroken || locker.isBroken || getLockerStatus(locker) === "occupied" || (selectedStudent && getLockerStatus(locker) === "available"))}
+                                    >
+                                      <span className="font-medium text-sm">{locker.number}</span>
+                                      {locker.isBroken ? (
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="inline-flex items-center">
+                                              <Badge
+                                                variant="destructive"
+                                                aria-label="Broken"
+                                                className="text-[10px] sm:text-xs overflow-hidden truncate"
+                                              >
+                                                Broken
+                                              </Badge>
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="max-w-xs">
+                                            <div className="text-sm">
+                                              <div className="font-semibold mb-1">Broken — Reason</div>
+                                              <div className="whitespace-pre-wrap text-xs text-muted-foreground">
+                                                {locker.brokenRemarks || "Reason not provided"}
+                                              </div>
+                                            </div>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      ) : (
                                         <Badge
-                                          variant="destructive"
-                                          aria-label="Broken"
+                                          variant={getLockerStatus(locker) === "occupied" ? "destructive" : "secondary"}
+                                          aria-label={getLockerStatus(locker) === "occupied" ? "Occupied" : "Available"}
                                           className="text-[10px] sm:text-xs overflow-hidden truncate"
                                         >
-                                          Broken
+                                          {getLockerStatus(locker) === "occupied" ? "Occupied" : "Available"}
                                         </Badge>
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="max-w-xs">
-                                      <div className="text-sm">
-                                        <div className="font-semibold mb-1">Broken — Reason</div>
-                                        <div className="whitespace-pre-wrap text-xs text-muted-foreground">
-                                          {rowLockers[i].brokenRemarks || "Reason not provided"}
-                                        </div>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                ) : (
-                                  <Badge
-                                    variant={getLockerStatus(rowLockers[i]) === "occupied" ? "destructive" : "secondary"}
-                                    aria-label={getLockerStatus(rowLockers[i]) === "occupied" ? "Occupied" : "Available"}
-                                    className="text-[10px] sm:text-xs overflow-hidden truncate"
-                                  >
-                                    {getLockerStatus(rowLockers[i]) === "occupied" ? "Occupied" : "Available"}
-                                  </Badge>
-                                )}
-                              </Button>
-                            ) : (
-                              <div className="h-14 w-16" />
-                            )}
-                          </td>
+                                      )}
+                                    </Button>
+                                  ) : (
+                                    <div className="h-14 w-16" />
+                                  )}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        )
+                      })
+                    })()
+                  ) : (
+                    <tr>
+                      <td className="p-1">No lockers</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-                          {/* Additional columns populated from columnLockers */}
-                          {Array.from({ length: colsForColumns }).map((_, colIndex) => {
-                            const idx = colIndex * rows + i
-                            const locker = columnLockers[idx]
-                            return (
-                              <td className="p-0" key={colIndex}>
-                                {locker ? (
-                                  <Button
-                                    variant="outline"
-                                    className={`h-16 w-20 m-0 flex flex-col items-center justify-center ${
-                                      locker.isBroken
-                                        ? "bg-yellow-100 border-yellow-300 hover:bg-yellow-200"
-                                        : getLockerStatus(locker) === "occupied"
-                                        ? "bg-red-100 border-red-300 hover:bg-red-200"
-                                        : "bg-green-100 border-green-300 hover:bg-green-200"
-                                    } ${markingBroken || locker.isBroken || (selectedStudent && getLockerStatus(locker) === "available") ? "cursor-pointer" : ""}`}
-                                    onClick={() => handleLockerClick(locker)}
-                                    disabled={!(markingBroken || locker.isBroken || getLockerStatus(locker) === "occupied" || (selectedStudent && getLockerStatus(locker) === "available"))}
-                                  >
-                                    <span className="font-medium text-sm">{locker.number}</span>
-                                    {locker.isBroken ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="inline-flex items-center">
-                                            <Badge
-                                              variant="destructive"
-                                              aria-label="Broken"
-                                              className="text-[10px] sm:text-xs overflow-hidden truncate"
-                                            >
-                                              Broken
-                                            </Badge>
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="max-w-xs">
-                                          <div className="text-sm">
-                                            <div className="font-semibold mb-1">Broken — Reason</div>
-                                            <div className="whitespace-pre-wrap text-xs text-muted-foreground">
-                                              {locker.brokenRemarks || "Reason not provided"}
-                                            </div>
-                                          </div>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ) : (
-                                      <Badge
-                                        variant={getLockerStatus(locker) === "occupied" ? "destructive" : "secondary"}
-                                        aria-label={getLockerStatus(locker) === "occupied" ? "Occupied" : "Available"}
-                                        className="text-[10px] sm:text-xs overflow-hidden truncate"
-                                      >
-                                        {getLockerStatus(locker) === "occupied" ? "Occupied" : "Available"}
-                                      </Badge>
-                                    )}
-                                  </Button>
-                                ) : (
-                                  <div className="h-14 w-16" />
-                                )}
-                              </td>
-                            )
-                          })}
-                        </tr>
-                      )
-                    })
-                  })()
+            {/* Mobile / narrow screens: responsive grid */}
+            <div className="block sm:hidden">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                {lockers.length > 0 ? (
+                  lockers.map((locker) => (
+                    <div key={locker.id} className="">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleLockerClick(locker)}
+                        disabled={!(markingBroken || locker.isBroken || getLockerStatus(locker) === "occupied" || (selectedStudent && getLockerStatus(locker) === "available"))}
+                        className={`w-full text-left p-3 flex items-center justify-between gap-3 ${
+                          locker.isBroken
+                            ? "bg-yellow-100 border-yellow-300 hover:bg-yellow-200"
+                            : getLockerStatus(locker) === "occupied"
+                            ? "bg-red-100 border-red-300 hover:bg-red-200"
+                            : "bg-green-100 border-green-300 hover:bg-green-200"
+                        } ${markingBroken || locker.isBroken || (selectedStudent && getLockerStatus(locker) === "available") ? "cursor-pointer" : ""}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium text-sm">{locker.number}</span>
+                        </div>
+                        <div>
+                          {locker.isBroken ? (
+                            <Badge variant="destructive" className="text-xs">
+                              Broken
+                            </Badge>
+                          ) : (
+                            <Badge variant={getLockerStatus(locker) === "occupied" ? "destructive" : "secondary"} className="text-xs">
+                              {getLockerStatus(locker) === "occupied" ? "Occupied" : "Available"}
+                            </Badge>
+                          )}
+                        </div>
+                      </Button>
+                    </div>
+                  ))
                 ) : (
-                  <tr>
-                    <td className="p-1">No lockers</td>
-                  </tr>
+                  <div className="p-2">No lockers</div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

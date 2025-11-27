@@ -66,7 +66,7 @@ function Home() {
         <div className="text-center mb-12">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-4">
             <img
-              src="/placeholder-logo.png"
+              src="/public/IMG_0704.jpeg"
               alt="BOM Logo"
               width={48}
               height={48}
