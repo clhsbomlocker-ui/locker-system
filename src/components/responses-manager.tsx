@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/ca
 import { Input } from "@/src/components/ui/input"
 import { Badge } from "@/src/components/ui/badge"
 import { Checkbox } from "@/src/components/ui/checkbox"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/src/components/ui/alert-dialog"
 import { Search, Download, User, Phone, GraduationCap, Hash, Trash2, Trash } from "lucide-react"
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, writeBatch } from "firebase/firestore"
 import { db } from "@/src/lib/firebase"
@@ -32,12 +31,10 @@ export function ResponsesManager() {
   const [loading, setLoading] = useState(true)
   const [selectedResponses, setSelectedResponses] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
-  const { user } = useAuth() // Added auth check
+  const { user } = useAuth()
   const [assignedMap, setAssignedMap] = useState<Record<string, string>>({})
 
-  // Ensure these variables are accessible in all functions below
-  // ...existing code...
-
+  // Load form responses
   useEffect(() => {
     if (!user) {
       setLoading(false)
@@ -58,15 +55,15 @@ export function ResponsesManager() {
         setLoading(false)
       },
       (error) => {
-        console.error("[v0] Firestore permission error in responses:", error)
+        console.error("Firestore error:", error)
         setLoading(false)
       },
     )
 
     return () => unsubscribe()
-  }, [user]) // Added user dependency
+  }, [user])
 
-  // Listen for assignments and build a quick lookup of responseId -> lockerId
+  // Load locker assignments
   useEffect(() => {
     const q = query(collection(db, "assignments"))
     const unsubscribe = onSnapshot(
@@ -82,12 +79,13 @@ export function ResponsesManager() {
         setAssignedMap(map)
       },
       (error) => {
-        console.error("[v0] Firestore permission error in assignments listener:", error)
+        console.error("Assignments error:", error)
       },
     )
     return () => unsubscribe()
   }, [])
 
+  // Search filter
   useEffect(() => {
     if (searchTerm) {
       const filtered = responses.filter(
@@ -102,18 +100,17 @@ export function ResponsesManager() {
     }
   }, [searchTerm, responses])
 
-  // Helper to resolve contact value regardless of stored field name
   const getContact = (response: FormResponse) => {
     const sd = response.studentData as any
     return sd.contactNumber || sd.contact || sd.phone || sd.mobile || ""
   }
 
+  // Export CSV
   const exportToCSV = () => {
-    // Build row objects so we can sort by numeric locker number (unassigned go last)
     const rowObjects = filteredResponses.map((response: FormResponse) => {
       const lockerId = assignedMap[response.id] || ""
-      const lockerNo = lockerId ? lockerId.replace("locker_", "") : "no rent"
-      const lockerNum = lockerNo === "no rent" ? Number.POSITIVE_INFINITY : parseInt(lockerNo, 10)
+      const lockerNo = lockerId ? lockerId.replace("locker_", "") : "NO RENT"
+      const lockerNum = lockerNo === "NO RENT" ? Number.POSITIVE_INFINITY : parseInt(lockerNo, 10)
       return {
         lockerNo,
         lockerNum,
@@ -123,10 +120,8 @@ export function ResponsesManager() {
       }
     })
 
-    // Sort by numeric locker number ascending; unassigned ("no rent" -> Infinity) will land at the end
     rowObjects.sort((a, b) => a.lockerNum - b.lockerNum)
 
-    // Map to CSV rows and assign NO. based on sorted order
     const rows = rowObjects.map((r, idx) => [
       (idx + 1).toString(),
       r.lockerNo,
@@ -137,260 +132,200 @@ export function ResponsesManager() {
 
     const header = ["NO.", "LOCKER NO.", "NAME", "CLASS", "SCHOOL NUMBER"]
 
-    // CSV safe quoting for fields containing commas/quotes/newlines
-    const csvContent = [header, ...rows]
-      .map((row) =>
-        row
-          .map((field) => {
-            const escaped = String(field ?? "").replace(/"/g, '""')
-            return `"${escaped}"`
-          })
-          .join(","),
-      )
+    const csv = [header, ...rows]
+      .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
       .join("\n")
 
-    const blob = new Blob([csvContent], { type: "text/csv" })
+    const blob = new Blob([csv], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `student_responses_${new Date().toISOString().split("T")[0]}.csv`
+    a.download = `responses_${new Date().toISOString().split("T")[0]}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
   }
 
-  const deleteResponse = async (responseId: string) => {
+  // Delete one
+  const deleteResponse = async (id: string) => {
     try {
       setDeleting(true)
-      await deleteDoc(doc(db, "responses", responseId))
-    } catch (error) {
-      console.error("Error deleting response:", error)
-      alert(`Error deleting response: ${error}`)
+      await deleteDoc(doc(db, "responses", id))
     } finally {
       setDeleting(false)
     }
   }
 
-  const deleteMultipleResponses = async (responseIds: string[]) => {
+  // Delete many
+  const deleteMultiple = async (ids: string[]) => {
     try {
       setDeleting(true)
       const batch = writeBatch(db)
-      
-      responseIds.forEach((id) => {
-        batch.delete(doc(db, "responses", id))
-      })
-      
+      ids.forEach((id) => batch.delete(doc(db, "responses", id)))
       await batch.commit()
       setSelectedResponses(new Set())
-    } catch (error) {
-      console.error("Error deleting responses:", error)
-      alert(`Error deleting responses: ${error}`)
     } finally {
       setDeleting(false)
     }
   }
 
-  const deleteAllResponses = async () => {
-  const allIds = filteredResponses.map((response: FormResponse) => response.id)
-  await deleteMultipleResponses(allIds)
+  const deleteAll = () => deleteMultiple(filteredResponses.map((r) => r.id))
+  const deleteSelected = () => deleteMultiple([...selectedResponses])
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedResponses)
+    next.has(id) ? next.delete(id) : next.add(id)
+    setSelectedResponses(next)
   }
 
-  const deleteSelectedResponses = async () => {
-    const selectedIds = Array.from(selectedResponses)
-    await deleteMultipleResponses(selectedIds)
-  }
-
-  const toggleSelectResponse = (responseId: string) => {
-    const newSelected = new Set(selectedResponses)
-    if (newSelected.has(responseId)) {
-      newSelected.delete(responseId)
-    } else {
-      newSelected.add(responseId)
-    }
-    setSelectedResponses(newSelected)
-  }
-
-  const toggleSelectAll = () => {
+  const toggleAll = () => {
     if (selectedResponses.size === filteredResponses.length) {
       setSelectedResponses(new Set())
     } else {
-      const allIds = filteredResponses.map((response: FormResponse) => response.id)
-      setSelectedResponses(new Set(allIds))
+      setSelectedResponses(new Set(filteredResponses.map((r) => r.id)))
     }
   }
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-8">Loading responses...</div>
-        </CardContent>
+        <CardContent className="p-6 text-center">Loading responses...</CardContent>
       </Card>
     )
   }
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <h2 className="text-xl font-semibold">Form Responses ({responses.length})</h2>
-            {filteredResponses.length > 0 && (
-              <div className="flex items-center gap-2">
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col lg:flex-row justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold">
+            Form Responses ({responses.length})
+          </h2>
+
+          {filteredResponses.length > 0 && (
+            <div className="flex items-center gap-2">
               <Checkbox
-                checked={selectedResponses.size === filteredResponses.length && filteredResponses.length > 0}
-                onCheckedChange={toggleSelectAll}
-                aria-label="Select all responses"
+                checked={
+                  selectedResponses.size === filteredResponses.length &&
+                  filteredResponses.length > 0
+                }
+                onCheckedChange={toggleAll}
               />
-                <span className="text-sm text-gray-600">
-                  {selectedResponses.size > 0 ? `${selectedResponses.size} selected` : "Select all"}
-                </span>
+              <span className="text-sm text-gray-600">
+                {selectedResponses.size > 0
+                  ? `${selectedResponses.size} selected`
+                  : "Select All"}
+              </span>
             </div>
           )}
         </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-            {selectedResponses.size > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={deleting}
-                onClick={() => {
-                  if (window.confirm(`Are you sure you want to delete ${selectedResponses.size} selected response${selectedResponses.size > 1 ? 's' : ''}? This action cannot be undone.`)) {
-                    deleteSelectedResponses()
-                  }
-                }}
-                className="w-full sm:w-auto"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Selected ({selectedResponses.size})
-              </Button>
-            )}
-            {filteredResponses.length > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={deleting}
-                onClick={() => {
-                  if (window.confirm(`Are you sure you want to delete all ${filteredResponses.length} response${filteredResponses.length > 1 ? 's' : ''}? This action cannot be undone.`)) {
-                    deleteAllResponses()
-                  }
-                }}
-                className="w-full sm:w-auto"
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                Delete All
-              </Button>
-            )}
-            <div className="relative w-full sm:w-auto">
+
+        {/* CONTROLS */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          {selectedResponses.size > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={deleting}
+              onClick={() =>
+                confirm(`Delete ${selectedResponses.size}?`) && deleteSelected()
+              }
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete Selected
+            </Button>
+          )}
+
+          {filteredResponses.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={deleting}
+              onClick={() =>
+                confirm(`Delete ALL ${filteredResponses.length}?`) && deleteAll()
+              }
+            >
+              <Trash className="mr-2 h-4 w-4" /> Delete All
+            </Button>
+          )}
+
+          <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search by name, school number, or class..."
+              placeholder="Search name / school no / class..."
+              className="pl-10 sm:w-64"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full sm:w-64"
             />
           </div>
-            <Button variant="outline" onClick={exportToCSV} disabled={filteredResponses.length === 0}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
+
+          <Button
+            variant="outline"
+            onClick={exportToCSV}
+            disabled={filteredResponses.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" /> Export CSV
+          </Button>
         </div>
       </div>
 
+      {/* EMPTY STATE */}
       {filteredResponses.length === 0 ? (
         <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-gray-500 py-8">
-              {searchTerm
-                ? "No responses match your search."
-                : "No responses yet. Share your registration form to start collecting data."}
-            </div>
+          <CardContent className="p-6 text-center text-gray-500">
+            {searchTerm
+              ? "No results match your search."
+              : "No form responses yet."}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredResponses.map((response: FormResponse) => (
-            <Card key={response.id}>
+          {filteredResponses.map((r) => (
+            <Card key={r.id}>
               <CardHeader>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex justify-between items-center gap-4">
+                  <div className="flex gap-2 items-center">
                     <Checkbox
-                      checked={selectedResponses.has(response.id)}
-                      onCheckedChange={() => toggleSelectResponse(response.id)}
-                      aria-label={`Select response from ${response.studentData.name}`}
-                      className="flex-shrink-0"
+                      checked={selectedResponses.has(r.id)}
+                      onCheckedChange={() => toggleSelect(r.id)}
                     />
-                    <CardTitle className="text-lg truncate">{response.studentData.name}</CardTitle>
+                    <CardTitle>{r.studentData.name}</CardTitle>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge
-                      variant="secondary"
-                      title={new Date(response.submittedAt.toDate()).toLocaleString()}
-                      aria-label={new Date(response.submittedAt.toDate()).toLocaleString()}
-                      className="hidden sm:inline-flex text-[10px] sm:text-xs overflow-hidden truncate"
-                    >
-                      {new Date(response.submittedAt.toDate()).toLocaleDateString()}
+
+                  <div className="flex gap-2 items-center">
+                    <Badge variant="secondary">
+                      {new Date(r.submittedAt.toDate()).toLocaleDateString()}
                     </Badge>
-                    <Badge
-                      variant="secondary"
-                      title={new Date(response.submittedAt.toDate()).toLocaleString()}
-                      aria-label={new Date(response.submittedAt.toDate()).toLocaleString()}
-                      className="sm:hidden text-[10px] overflow-hidden truncate"
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        confirm(`Delete ${r.studentData.name}?`) &&
+                        deleteResponse(r.id)
+                      }
                     >
-                      {new Date(response.submittedAt.toDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      disabled={deleting}
-                      onClick={() => {
-                        if (window.confirm(`Are you sure you want to delete the response from ${response.studentData.name}? This action cannot be undone.`)) {
-                          deleteResponse(response.id)
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="text-red-500" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg">
-                      <Hash className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-600">School Number</div>
-                        <div className="text-base font-semibold break-all">{response.studentData.schoolNumber}</div>
-                      </div>
-                    </div>
 
-                    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg">
-                      <GraduationCap className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-600">Class</div>
-                        <div className="text-base font-semibold break-all">{response.studentData.class}</div>
-                      </div>
-                    </div>
+              <CardContent className="space-y-3">
+                <InfoRow icon={Hash} label="School Number" value={r.studentData.schoolNumber} />
+                <InfoRow icon={GraduationCap} label="Class" value={r.studentData.class} />
+                <InfoRow icon={Phone} label="Contact" value={getContact(r)} />
 
-                    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg">
-                      <Phone className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-600">Contact</div>
-                        <div className="text-base font-semibold break-all">{getContact(response)}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg">
-                      <User className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-600">Status</div>
-                        {assignedMap[response.id] ? (
-                          <Badge variant="secondary" className="mt-1">Assigned — {assignedMap[response.id].replace("locker_", "")}</Badge>
-                        ) : (
-                          <Badge variant="outline" className="mt-1">Pending Assignment</Badge>
-                        )}
-                      </div>
-                    </div>
+                <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg">
+                  <User className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-600">Locker Status</div>
+                    {assignedMap[r.id] ? (
+                      <Badge variant="secondary">
+                        Assigned — {assignedMap[r.id].replace("locker_", "")}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Pending Assignment</Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -399,6 +334,18 @@ export function ResponsesManager() {
         </div>
       )}
     </div>
-    </>
   )
 }
+
+function InfoRow({ icon: Icon, label, value }: any) {
+  return (
+    <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg">
+      <Icon className="h-5 w-5 text-gray-400 mt-0.5" />
+      <div className="flex-1">
+        <div className="text-sm text-gray-600">{label}</div>
+        <div className="text-base font-medium break-all">{value}</div>
+      </div>
+    </div>
+  )
+}
+
