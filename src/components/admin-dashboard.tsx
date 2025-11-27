@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from "react"
-import Image from "next/image"
 import { Button } from "@/src/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/tabs"
 import { FileText, Grid3X3, Users, LogOut, BarChart3, PenTool, Wrench } from "lucide-react"
@@ -36,14 +35,13 @@ export function AdminDashboard(): JSX.Element {
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Image
-              src={LOCAL_IMG}        // ← Use this
-              // src={GITHUB_IMG}     // ← Or use this (if whitelisted)
+            <img
+              src={LOCAL_IMG}
+              // Use `GITHUB_IMG` if desired: src={GITHUB_IMG}
               alt="Monitor Logo"
               width={56}
               height={56}
               className="object-contain rounded-sm"
-              priority
             />
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -97,14 +95,13 @@ export function AdminDashboard(): JSX.Element {
             <DashboardOverview onTabChange={setActiveTab} />
 
             <div className="mt-4 flex justify-center">
-              <Image
-                src={LOCAL_IMG}        // ← Use local
-                // src={GITHUB_IMG}     // ← Or GitHub
+              <img
+                src={LOCAL_IMG}
+                // Use `GITHUB_IMG` if desired: src={GITHUB_IMG}
                 alt="Dashboard Image"
                 width={900}
                 height={600}
                 className="rounded-xl shadow-md object-cover"
-                priority
               />
             </div>
           </TabsContent>
