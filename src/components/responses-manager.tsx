@@ -102,7 +102,7 @@ export function ResponsesManager() {
     arr.sort((a, b) => a.lockerNumber - b.lockerNumber)
     const header = ["NO", "LOCKER", "NAME", "CLASS", "SCHOOL NUMBER"]
     const rows = arr.map((r, i) => [i + 1, r.lockerNo, r.name, r.class, r.schoolNumber])
-    const csv = [header, ...rows].map((row) => row.map((v) => +"\""+$`{String(v).replace(/"/g, '""')}+"\""`).join(",")).join("\n")
+    const csv = [header, ...rows].map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n")
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a"); a.href = url; a.download = "responses.csv"; a.click()
@@ -157,7 +157,7 @@ export function ResponsesManager() {
                 <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg"><Hash className="h-5 w-5 text-gray-400" /><div><div className="text-sm text-gray-600">School Number</div><div className="font-semibold">{s.schoolNumber}</div></div></div>
                 <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg"><GraduationCap className="h-5 w-5 text-gray-400" /><div><div className="text-sm text-gray-600">Class</div><div className="font-semibold">{s.class}</div></div></div>
                 <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg"><Phone className="h-5 w-5 text-gray-400" /><div><div className="text-sm text-gray-600">Contact</div><div className="font-semibold">{s.contact}</div></div></div>
-                <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg"><User className="h-5 w-5 text-gray-400" /><div><div className="text-sm text-gray-600">Status</div>{assignedMap[res.id] ? <Badge variant="secondary">Assigned  {assignedMap[res.id].replace("locker_", "")}</Badge> : <Badge variant="outline">Pending Assignment</Badge>}</div></div>
+                <div className="flex items-start gap-3 p-2 bg-gray-50 rounded-lg"><User className="h-5 w-5 text-gray-400" /><div><div className="text-sm text-gray-600">Status</div>{assignedMap[res.id] ? <Badge variant="secondary">Assigned - {assignedMap[res.id].replace("locker_", "")}</Badge> : <Badge variant="outline">Pending Assignment</Badge>}</div></div>
               </CardContent>
             </Card>
           )
