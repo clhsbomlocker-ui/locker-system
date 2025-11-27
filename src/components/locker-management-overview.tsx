@@ -11,60 +11,10 @@ type Locker = {
 
 export function LockerManagementOverview(): JSX.Element {
   const [lockers, setLockers] = useState<Locker[]>([])
-  const [form, setForm] = useState<Locker>({ lockerNumber: "", studentName: "", studentID: "", className: "" })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    } as unknown as Locker)
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLockers([...lockers, form])
-    setForm({ lockerNumber: "", studentName: "", studentID: "", className: "" })
-  }
 
   return (
     <div className="p-4">
-      <h2 className="text-lg font-semibold mb-2">Locker Form</h2>
-
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <input
-          name="lockerNumber"
-          placeholder="Locker Number"
-          value={form.lockerNumber}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <input
-          name="studentName"
-          placeholder="Student Name"
-          value={form.studentName}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <input
-          name="studentID"
-          placeholder="Student ID"
-          value={form.studentID}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <input
-          name="className"
-          placeholder="Class"
-          value={form.className}
-          onChange={handleChange}
-          className="border p-2 rounded w-full"
-        />
-
-        <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">Save</button>
-      </form>
+      {/* Locker form removed per request - creation/edits handled elsewhere */}
 
       <h3 className="mt-6 text-md font-medium">Locker Table</h3>
       <div className="overflow-auto mt-2">
