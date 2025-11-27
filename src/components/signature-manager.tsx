@@ -48,8 +48,17 @@ export function SignatureManager() {
     if (!ctx) return;
 
     setIsDrawing(true);
+    // compute accurate coordinates considering CSS scaling
+    const rect = canvas.getBoundingClientRect();
+    const clientX = (e.nativeEvent as MouseEvent).clientX;
+    const clientY = (e.nativeEvent as MouseEvent).clientY;
+    const x = ((clientX - rect.left) * (canvas.width / rect.width));
+    const y = ((clientY - rect.top) * (canvas.height / rect.height));
     ctx.beginPath();
-    ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 2;
+    ctx.moveTo(x, y);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -61,7 +70,12 @@ export function SignatureManager() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    const rect = canvas.getBoundingClientRect();
+    const clientX = (e.nativeEvent as MouseEvent).clientX;
+    const clientY = (e.nativeEvent as MouseEvent).clientY;
+    const x = ((clientX - rect.left) * (canvas.width / rect.width));
+    const y = ((clientY - rect.top) * (canvas.height / rect.height));
+    ctx.lineTo(x, y);
     ctx.stroke();
   };
 
