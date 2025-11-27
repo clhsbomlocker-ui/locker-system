@@ -14,7 +14,7 @@ export function DashboardOverview({ onTabChange }: DashboardOverviewProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
-        <p className="text-gray-600">Monitor your locker management system at a glance</p>
+        <p className="text-gray-600">Monitor your lockers management system at a glance</p>
       </div>
 
       <DashboardStats />
