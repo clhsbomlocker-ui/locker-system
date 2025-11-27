@@ -161,19 +161,25 @@ export function LockerGrid({ selectedStudent, onAssignmentComplete }: LockerGrid
       const responseDoc = querySnapshot.docs.find((doc) => doc.id === assignment.studentId)
 
       if (responseDoc) {
-        const responseData = responseDoc.data()
+        const responseData = responseDoc.data() as any
 
-        // Extract student data from the nested structure
-        const studentData = responseData.data?.studentData || responseData.studentData || responseData
+        // Handle different response shapes and field names
+        const payload = responseData?.studentData ?? responseData?.data?.studentData ?? responseData?.data ?? responseData
 
-        if (studentData) {
+        if (payload) {
+          const name = payload.name || payload.fullName || payload.displayName || ""
+          const schoolNumber = payload.schoolNumber || payload.school_number || payload.schoolNo || payload.studentNumber || ""
+          const cls = payload.class || payload.className || payload.form || payload.grade || ""
+          const contactNumber = payload.contactNumber || payload.contact || payload.phone || payload.mobile || ""
+          const createdAt = payload.createdAt || payload.created_at || null
+
           return {
             id: responseDoc.id,
-            name: studentData.name,
-            schoolNumber: studentData.schoolNumber,
-            class: studentData.class,
-            contactNumber: studentData.contactNumber,
-            createdAt: studentData.createdAt,
+            name,
+            schoolNumber,
+            class: cls,
+            contactNumber,
+            createdAt,
           } as Student
         }
       }

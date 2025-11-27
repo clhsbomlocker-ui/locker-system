@@ -225,35 +225,23 @@ export function SignatureManager() {
                     <label htmlFor="agree-rules" className="text-sm">我已阅读并同意上述储物柜租用规则</label>
                   </div>
 
-                  <div className="mt-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                      <canvas
-                        ref={canvasRef}
-                        width={400}
-                        height={200}
-                        className="border border-gray-200 rounded cursor-crosshair"
-                        onMouseDown={startDrawing}
-                        onMouseMove={draw}
-                        onMouseUp={stopDrawing}
-                        onMouseLeave={stopDrawing}
-                        style={{ width: '100%', height: '200px' }}
-                      />
-                    </div>
-                  </div>
-
-                  <DialogFooter>
-                    <div className="flex w-full gap-2">
-                      <Button onClick={clearCanvas} variant="outline" className="flex-1">
-                        Clear
-                      </Button>
-                      <Button onClick={saveSignature} className="flex-1" disabled={!agreed}>
-                        <Download className="h-4 w-4 mr-2" />
-                        Save Signature
-                      </Button>
-                    </div>
-                  </DialogFooter>
+                  {/* Modal shows only rules and agreement; signature pad remains below the button */}
                 </DialogContent>
               </Dialog>
+            </div>
+            {/* Signature canvas remains visible below the rules button (outside the modal) */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+              <canvas
+                ref={canvasRef}
+                width={400}
+                height={200}
+                className="border border-gray-200 rounded cursor-crosshair"
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                style={{ width: '100%', height: '200px' }}
+              />
             </div>
             <div className="flex gap-2">
               <Button onClick={clearCanvas} variant="outline" className="flex-1">
