@@ -244,6 +244,26 @@ export function FormBuilder() {
     navigator.clipboard.writeText(text)
   }
 
+  // Convert a label to a semantic field ID (camelCase)
+  const labelToFieldId = (label: string): string => {
+    // Map common labels to canonical IDs
+    const labelLower = label.toLowerCase().trim()
+    if (labelLower.includes('name') && !labelLower.includes('class')) return 'name'
+    if (labelLower.includes('school') && labelLower.includes('number')) return 'schoolNumber'
+    if (labelLower.includes('student') && labelLower.includes('number')) return 'schoolNumber'
+    if (labelLower.includes('student') && labelLower.includes('id')) return 'schoolNumber'
+    if (labelLower.includes('class') || labelLower.includes('grade') || labelLower.includes('form')) return 'class'
+    if (labelLower.includes('contact') || labelLower.includes('phone') || labelLower.includes('mobile')) return 'contactNumber'
+    if (labelLower.includes('email')) return 'email'
+    // Default: convert to camelCase
+    return label
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .split(/\s+/)
+      .map((word, index) => index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1))
+      .join('') || `field_${Date.now()}`
+  }
+
   const addField = () => {
     const newField: FormField = {
       id: `field_${Date.now()}`,
@@ -267,9 +287,20 @@ export function FormBuilder() {
   const updateField = (fieldId: string, updates: Partial<FormField>) => {
     setFormConfig(prev => ({
       ...prev,
-      fields: prev.fields.map(field => 
-        field.id === fieldId ? { ...field, ...updates } : field
-      )
+      fields: prev.fields.map(field => {
+        if (field.id !== fieldId) return field
+        const newField = { ...field, ...updates }
+        // If label changed, update ID to a semantic one
+        if (updates.label && updates.label !== field.label) {
+          const newId = labelToFieldId(updates.label)
+          // Check if this ID already exists (avoid duplicates)
+          const idExists = prev.fields.some(f => f.id === newId && f.id !== fieldId)
+          if (!idExists) {
+            newField.id = newId
+          }
+        }
+        return newField
+      })
     }))
   }
 

@@ -138,11 +138,43 @@ export function StudentRegistrationForm({ formId = "default" }: StudentRegistrat
       // are mapped consistently in Firestore.
       const sd = formData as Record<string, any>
 
+      // Helper to find value by field ID or by matching label patterns
+      const findValue = (keys: string[], labelPatterns: string[]): string => {
+        // First try exact field ID matches
+        for (const key of keys) {
+          if (sd[key]) return sd[key]
+        }
+        // Then try to match by field label in form config
+        if (formConfig?.fields) {
+          for (const field of formConfig.fields) {
+            const labelLower = field.label.toLowerCase()
+            for (const pattern of labelPatterns) {
+              if (labelLower.includes(pattern) && sd[field.id]) {
+                return sd[field.id]
+              }
+            }
+          }
+        }
+        return ""
+      }
+
       const studentData = {
-        name: sd.name || sd.fullName || sd.studentName || sd.student || "",
-        schoolNumber: sd.schoolNumber || sd.studentId || sd.id || sd.schoolNo || "",
-        class: sd.class || sd.grade || sd.className || "",
-        contactNumber: sd.contactNumber || sd.contact || sd.phone || sd.mobile || "",
+        name: findValue(
+          ['name', 'fullName', 'studentName', 'student'],
+          ['name']
+        ),
+        schoolNumber: findValue(
+          ['schoolNumber', 'studentId', 'id', 'schoolNo', 'studentNumber'],
+          ['school number', 'student number', 'student id', 'school no']
+        ),
+        class: findValue(
+          ['class', 'grade', 'className', 'form'],
+          ['class', 'grade', 'form']
+        ),
+        contactNumber: findValue(
+          ['contactNumber', 'contact', 'phone', 'mobile', 'phoneNumber', 'tel'],
+          ['contact', 'phone', 'mobile', 'tel']
+        ),
         createdAt: new Date(),
         // Keep original submission for debugging / backwards-compatibility
         rawData: sd,
