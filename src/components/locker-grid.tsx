@@ -163,15 +163,16 @@ export function LockerGrid({ selectedStudent, onAssignmentComplete }: LockerGrid
       if (responseDoc) {
         const responseData = responseDoc.data() as any
 
-        // Handle different response shapes and field names
-        const payload = responseData?.studentData ?? responseData?.data?.studentData ?? responseData?.data ?? responseData
+        // Prefer common nested locations, but also check rawData and top-level
+        const payload = responseData?.studentData ?? responseData?.rawData ?? responseData?.data?.studentData ?? responseData?.data?.rawData ?? responseData?.data ?? responseData
 
         if (payload) {
-          const name = payload.name || payload.fullName || payload.displayName || ""
-          const schoolNumber = payload.schoolNumber || payload.school_number || payload.schoolNo || payload.studentNumber || ""
-          const cls = payload.class || payload.className || payload.form || payload.grade || ""
-          const contactNumber = payload.contactNumber || payload.contact || payload.phone || payload.mobile || ""
-          const createdAt = payload.createdAt || payload.created_at || null
+          const name = payload.name || payload.fullName || payload.displayName || responseData.name || ""
+          const schoolNumber =
+            payload.schoolNumber || payload.school_number || payload.schoolNo || payload.studentNumber || responseData.schoolNumber || responseData.school_number || ""
+          const cls = payload.class || payload.className || payload.form || payload.grade || responseData.class || ""
+          const contactNumber = payload.contactNumber || payload.contact || payload.phone || payload.mobile || responseData.contactNumber || responseData.contact || ""
+          const createdAt = payload.createdAt || payload.created_at || responseData.createdAt || null
 
           return {
             id: responseDoc.id,
