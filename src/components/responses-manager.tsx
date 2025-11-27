@@ -14,10 +14,15 @@ import { useAuth } from "./auth-provider"
 
 interface FormResponse {
   id: string
-  formId?: string
-  // keep it loose because Firestore documents may vary in shape
-  studentData?: any
-  submittedAt?: any
+  formId: string
+  studentData: {
+    name: string
+    schoolNumber: string
+    class: string
+    contactNumber: string
+    createdAt: any
+  }
+  submittedAt: any
 }
 
 export function ResponsesManager() {
@@ -61,56 +66,6 @@ export function ResponsesManager() {
     return () => unsubscribe()
   }, [user]) // Added user dependency
 
-  // Helper to resolve student fields from possibly varying response shapes
-  const resolveStudent = (response: FormResponse) => {
-    // Delegate to the more robust resolver so all usages stay consistent
-    return resolveStudentRobust(response)
-  }
-
-  // More robust recursive finder for unexpected nested shapes
-  const findValueRecursive = (obj: any, keys: string[]): any => {
-    if (!obj || typeof obj !== "object") return undefined
-    for (const k of keys) {
-      if (Object.prototype.hasOwnProperty.call(obj, k)) return obj[k]
-    }
-    for (const v of Object.values(obj)) {
-      const found = findValueRecursive(v, keys)
-      if (found !== undefined) return found
-    }
-    return undefined
-  }
-
-  const resolveStudentRobust = (response: FormResponse) => {
-    const rd: any = response as any
-
-    // Candidate roots to search for fields, in order of likely priority
-    const roots = [
-      rd.studentData,
-      rd.rawData,
-      rd.data?.studentData,
-      rd.data?.rawData,
-      rd.data,
-      rd,
-    ]
-
-    // Helper to search all candidate roots for a set of keys
-    const findAcrossRoots = (keys: string[]) => {
-      for (const root of roots) {
-        const found = findValueRecursive(root, keys)
-        if (found !== undefined) return found
-      }
-      return undefined
-    }
-
-    const name = findAcrossRoots(["name", "fullName", "displayName"]) || ""
-    const schoolNumber =
-      findAcrossRoots(["schoolNumber", "school_number", "schoolNo", "studentNumber"]) || ""
-    const cls = findAcrossRoots(["class", "className", "form", "grade"]) || ""
-    const contact = findAcrossRoots(["contactNumber", "contact", "phone", "mobile"]) || ""
-
-    return { name, schoolNumber, class: cls, contact }
-  }
-
   // Listen for assignments and build a quick lookup of responseId -> lockerId
   useEffect(() => {
     const q = query(collection(db, "assignments"))
@@ -135,15 +90,12 @@ export function ResponsesManager() {
 
   useEffect(() => {
     if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      const filtered = responses.filter((response: FormResponse) => {
-        const s = resolveStudent(response)
-        return (
-          s.name.toLowerCase().includes(term) ||
-          s.schoolNumber.toLowerCase().includes(term) ||
-          s.class.toLowerCase().includes(term)
-        )
-      })
+      const filtered = responses.filter(
+        (response: FormResponse) =>
+          response.studentData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          response.studentData.schoolNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          response.studentData.class.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
       setFilteredResponses(filtered)
     } else {
       setFilteredResponses(responses)
@@ -152,7 +104,8 @@ export function ResponsesManager() {
 
   // Helper to resolve contact value regardless of stored field name
   const getContact = (response: FormResponse) => {
-    return resolveStudent(response).contact
+    const sd = response.studentData as any
+    return sd.contactNumber || sd.contact || sd.phone || sd.mobile || ""
   }
 
   const exportToCSV = () => {
@@ -161,13 +114,12 @@ export function ResponsesManager() {
       const lockerId = assignedMap[response.id] || ""
       const lockerNo = lockerId ? lockerId.replace("locker_", "") : "no rent"
       const lockerNum = lockerNo === "no rent" ? Number.POSITIVE_INFINITY : parseInt(lockerNo, 10)
-      const s = resolveStudent(response)
       return {
         lockerNo,
         lockerNum,
-        name: s.name,
-        cls: s.class,
-        schoolNumber: s.schoolNumber,
+        name: response.studentData.name,
+        cls: response.studentData.class,
+        schoolNumber: response.studentData.schoolNumber,
       }
     })
 
@@ -176,11 +128,11 @@ export function ResponsesManager() {
 
     // Map to CSV rows and assign NO. based on sorted order
     const rows = rowObjects.map((r, idx) => [
-    (idx + 1).toString(),
-    r.lockerNo,
-    r.name,
-    r.cls,
-    r.schoolNumber,
+      (idx + 1).toString(),
+      r.lockerNo,
+      r.name,
+      r.cls,
+      r.schoolNumber,
     ])
 
     const header = ["NO.", "LOCKER NO.", "NAME", "CLASS", "SCHOOL NUMBER"]
@@ -356,12 +308,7 @@ export function ResponsesManager() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredResponses.map((response: FormResponse) => {
-            const s = resolveStudentRobust(response)
-            const submittedAt = (response as any).submittedAt ?? (response as any).data?.submittedAt ?? null
-            const dateTitle = submittedAt && (submittedAt.toDate ? submittedAt.toDate().toLocaleString() : new Date(submittedAt).toLocaleString())
-            const dateDisplay = submittedAt && (submittedAt.toDate ? submittedAt.toDate().toLocaleDateString() : new Date(submittedAt).toLocaleDateString())
-            return (
+          {filteredResponses.map((response: FormResponse) => (
             <Card key={response.id}>
               <CardHeader>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -369,34 +316,34 @@ export function ResponsesManager() {
                     <Checkbox
                       checked={selectedResponses.has(response.id)}
                       onCheckedChange={() => toggleSelectResponse(response.id)}
-                      aria-label={`Select response from ${s.name}`}
+                      aria-label={`Select response from ${response.studentData.name}`}
                       className="flex-shrink-0"
                     />
-                    <CardTitle className="text-lg truncate">{s.name}</CardTitle>
+                    <CardTitle className="text-lg truncate">{response.studentData.name}</CardTitle>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge
                       variant="secondary"
-                      title={dateTitle || ""}
-                      aria-label={dateTitle || ""}
+                      title={new Date(response.submittedAt.toDate()).toLocaleString()}
+                      aria-label={new Date(response.submittedAt.toDate()).toLocaleString()}
                       className="hidden sm:inline-flex text-[10px] sm:text-xs overflow-hidden truncate"
                     >
-                      {dateDisplay || ""}
+                      {new Date(response.submittedAt.toDate()).toLocaleDateString()}
                     </Badge>
                     <Badge
                       variant="secondary"
-                      title={dateTitle || ""}
-                      aria-label={dateTitle || ""}
+                      title={new Date(response.submittedAt.toDate()).toLocaleString()}
+                      aria-label={new Date(response.submittedAt.toDate()).toLocaleString()}
                       className="sm:hidden text-[10px] overflow-hidden truncate"
                     >
-                      {dateDisplay ? new Date(dateDisplay).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ""}
+                      {new Date(response.submittedAt.toDate()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </Badge>
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       disabled={deleting}
                       onClick={() => {
-                        if (window.confirm(`Are you sure you want to delete the response from ${s.name}? This action cannot be undone.`)) {
+                        if (window.confirm(`Are you sure you want to delete the response from ${response.studentData.name}? This action cannot be undone.`)) {
                           deleteResponse(response.id)
                         }
                       }}
@@ -413,7 +360,7 @@ export function ResponsesManager() {
                       <Hash className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-gray-600">School Number</div>
-                        <div className="text-base font-semibold break-all">{s.schoolNumber}</div>
+                        <div className="text-base font-semibold break-all">{response.studentData.schoolNumber}</div>
                       </div>
                     </div>
 
@@ -421,7 +368,7 @@ export function ResponsesManager() {
                       <GraduationCap className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-gray-600">Class</div>
-                        <div className="text-base font-semibold break-all">{s.class}</div>
+                        <div className="text-base font-semibold break-all">{response.studentData.class}</div>
                       </div>
                     </div>
 
@@ -429,7 +376,7 @@ export function ResponsesManager() {
                       <Phone className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-gray-600">Contact</div>
-                        <div className="text-base font-semibold break-all">{s.contact}</div>
+                        <div className="text-base font-semibold break-all">{getContact(response)}</div>
                       </div>
                     </div>
 
@@ -448,11 +395,10 @@ export function ResponsesManager() {
                 </div>
               </CardContent>
             </Card>
-          )})}
+          ))}
         </div>
       )}
     </div>
     </>
   )
 }
-
