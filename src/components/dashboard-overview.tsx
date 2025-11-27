@@ -3,7 +3,6 @@
 import { DashboardStats } from "./dashboard-stats"
 import { RecentActivity } from "./recent-activity"
 import { QuickActions } from "./quick-actions"
-import { LockerManagementOverview } from "./locker-management-overview"
 
 interface DashboardOverviewProps {
   onTabChange?: (tab: string) => void
@@ -22,11 +21,6 @@ export function DashboardOverview({ onTabChange }: DashboardOverviewProps) {
       <div className="grid gap-6 md:grid-cols-2">
         <RecentActivity />
         <QuickActions onTabChange={onTabChange} />
-        
-        {/* Locker Management Overview Section */}
-        <div className="md:col-span-2">
-          <LockerManagementOverview />
-        </div>
       </div>
     </div>
   )
