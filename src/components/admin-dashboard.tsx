@@ -137,7 +137,7 @@ export function AdminDashboard(): JSX.Element {
 
           <div className="border-t border-gray-700 mt-8 pt-8">
             <p className="text-gray-400 text-sm">
-              © Chung Ling High School T02 Board of Monitors Locker System. All rights reserved.
+              © Chung Ling High School T02 Board of Monitors Locker System. All rights reserved..
             </p>
             <p className="text-gray-600 text-xs mt-2 opacity-50">Developed since 2025.</p>
           </div>
