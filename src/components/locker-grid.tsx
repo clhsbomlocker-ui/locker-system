@@ -13,6 +13,7 @@ import { collection, query, onSnapshot, doc, setDoc, updateDoc, deleteDoc, where
 import { db } from "@/src/lib/firebase"
 import { useAuth } from "./auth-provider"
 import type { Locker, Student, LockerAssignment } from "@/src/lib/types"
+import { SignatureCapture } from "./signature-manager"
 
 interface LockerGridProps {
   selectedStudent?: Student | null
@@ -246,8 +247,10 @@ export function LockerGrid({ selectedStudent, onAssignmentComplete }: LockerGrid
         assignedAt: new Date(),
       })
 
-      // reset UI
-      setSelectedLocker(null)
+      // keep dialog open and show assigned state so admin/student can sign
+      setCurrentAssignment(assignmentData as any)
+      setAssignedStudent(selectedStudent)
+      // Do not clear selectedLocker so the dialog remains open
       onAssignmentComplete?.()
     } catch (error: any) {
       console.error("Failed to assign locker:", error)
@@ -833,6 +836,18 @@ export function LockerGrid({ selectedStudent, onAssignmentComplete }: LockerGrid
                     src={currentAssignment.signatureUrl || "/placeholder.svg"}
                     alt="Student Signature"
                     className="max-w-full h-20 border border-green-200 rounded bg-white"
+                  />
+                </div>
+              ) : currentAssignment ? (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <SignatureCapture
+                    assignmentId={currentAssignment.id}
+                    lockerId={selectedLocker?.id || ""}
+                    studentId={currentAssignment.studentId}
+                    studentName={assignedStudent?.name}
+                    onSaved={(url) => {
+                      setCurrentAssignment((prev) => (prev ? { ...prev, signatureUrl: url, signatureCompletedAt: new Date() as any } : prev));
+                    }}
                   />
                 </div>
               ) : null}

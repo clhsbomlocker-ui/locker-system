@@ -5,6 +5,9 @@ import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import { Checkbox } from "@/src/components/ui/checkbox";
 import { PenTool, Download } from "lucide-react";
+import { db, storage } from "@/src/lib/firebase";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 
 export function LockerAgreement() {
   const [assignedLocker, setAssignedLocker] = useState<string | null>(null);
@@ -154,6 +157,114 @@ export function LockerAgreement() {
           </Card>
         </>
       )}
+    </div>
+  );
+}
+
+interface SignatureCaptureProps {
+  assignmentId: string;
+  lockerId: string;
+  studentId: string;
+  studentName?: string;
+  onSaved?: (url: string) => void;
+}
+
+export function SignatureCapture({ assignmentId, lockerId, studentId, studentName, onSaved }: SignatureCaptureProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    setIsDrawing(true);
+    ctx.beginPath();
+    ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => setIsDrawing(false);
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const saveSignature = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setSaving(true);
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      // upload to storage
+      const sigId = `sig_${Date.now()}_${assignmentId}`;
+      const sRef = storageRef(storage, `signatures/${sigId}.png`);
+      await uploadString(sRef, dataUrl, "data_url");
+      const url = await getDownloadURL(sRef);
+
+      // write signature doc
+      await setDoc(doc(db, "signatures", sigId), {
+        id: sigId,
+        assignmentId,
+        lockerId,
+        studentId,
+        studentName: studentName || null,
+        signatureUrl: url,
+        createdAt: new Date(),
+      });
+
+      // update assignment
+      await updateDoc(doc(db, "assignments", assignmentId), {
+        signatureId: sigId,
+        signatureUrl: url,
+        signatureCompletedAt: new Date(),
+      });
+
+      onSaved?.(url);
+    } catch (error) {
+      console.error("Failed to save signature:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="text-sm">请在下方签名以完成合约</div>
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-2">
+        <canvas
+          ref={canvasRef}
+          width={600}
+          height={200}
+          className="border border-gray-200 rounded cursor-crosshair"
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          style={{ width: "100%", height: "200px" }}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={clearCanvas} disabled={saving} className="flex-1">清除</Button>
+        <Button onClick={saveSignature} className="flex-1" disabled={saving}>
+          <Download className="h-4 w-4 mr-2" />
+          {saving ? "保存中..." : "提交签名"}
+        </Button>
+      </div>
     </div>
   );
 }
